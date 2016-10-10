@@ -11,10 +11,13 @@
  *  参数：
  *  inputClass：输入框的类名
  *  onchange：下拉列表选择改变时触发的事件
+ *  listMaxHeight：下拉列表最大高度
  */
 $.widget('ui.autoCompleteCombox', {
 	_create: function() {
+		//隐藏原select
 		this.element.hide();
+		
 		//创建最外层div
 		this.div = $('<div>').insertBefore(this.element).addClass('comboFilter');
 		
@@ -53,17 +56,35 @@ $.widget('ui.autoCompleteCombox', {
 		
 		//创建下拉框
 		this.ul = $('<ul>').appendTo(this.div).css({top: divHeight}).width(divWidth-2).hide();
+		
+		var listMaxHeight = this.options.listMaxHeight;
+		if(listMaxHeight){
+			this.ul.css({maxHeight: listMaxHeight, overflowY:'auto'});
+		}
+		
 		var _ul = this.ul;
 		var _input = this.input;
 		
 		var optionPaddingLeft = this.element.css('padding-left');
+		
+		if(parseInt(optionPaddingLeft) == 0){
+			optionPaddingLeft = '4px';
+		}
+		
 		var fontSize = this.element.css('font-size');
+		var fontFamily = this.element.css('font-family');
 		
 		this.element.children().each(function(){
 			var _value = $(this).attr('value');
 			var _text = $(this).text();
 			var _selected = $(this).prop('selected');
-			var _li = $('<li>').appendTo(_ul).attr('value', _value).text(_text).css({paddingLeft: optionPaddingLeft, fontSize: fontSize});
+			var _li = $('<li>').appendTo(_ul).attr('value', _value).text(_text)
+				.css({
+						paddingLeft: optionPaddingLeft, 
+						fontSize: fontSize,
+						fontFamily: fontFamily,
+						height: fontSize
+					});
 			if(_selected){
 				_li.addClass('selected');
 				_input.val(_text);
@@ -109,11 +130,21 @@ $.widget('ui.autoCompleteCombox', {
 			return;
 		}
 		
-		this.ul.children('.selected').removeClass('selected');
-		_childrens.eq(_index).addClass('selected');
+		var _selectedItem = _childrens.eq(_index); 
 		
-		var _value = _childrens.eq(_index).attr('value');
-		var _text = _childrens.eq(_index).text();
+		this.ul.children('.selected').removeClass('selected');
+		_selectedItem.addClass('selected');
+		
+		var _value = _selectedItem.attr('value');
+		var _text = _selectedItem.text();
+		
+		var _position = _selectedItem.position();
+		
+		if(_position.top < 0){
+			this.ul.scrollTop(this.ul.scrollTop() - _selectedItem.outerHeight());
+		}else if(_position.top + _selectedItem.outerHeight() >= this.ul.height()){
+			this.ul.scrollTop(_selectedItem.outerHeight() + this.ul.scrollTop());
+		}
 		
 		this._onChange(_value, _text);
     },
