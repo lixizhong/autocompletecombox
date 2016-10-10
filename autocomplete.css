@@ -29,6 +29,9 @@
 	color:#000;
 	cursor: default;
 	list-style:none;
+	word-break:keep-all;
+	word-wrap:normal;
+	overflow:hidden;
 }
 .comboFilter ul li:hover, .comboFilter ul li.selected{
 	background:#1E90FF;
