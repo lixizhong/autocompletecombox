@@ -44,6 +44,9 @@ $.widget('ui.autoCompleteCombox', {
 		
 		this.input.width(divWidth - inputWidthPadding);
 		this.input.height(divHeight - inputHeightPadding);
+		this.input.css({
+			lineHeight: (divHeight - inputHeightPadding) + 'px'	//只对IE生效
+		});
 		
 		//设置下三角位置
 		var spanWidth = this.span.outerWidth();
@@ -55,7 +58,9 @@ $.widget('ui.autoCompleteCombox', {
 		});
 		
 		//创建下拉框
-		this.ul = $('<ul>').appendTo(this.div).css({top: divHeight}).width(divWidth-2).hide();
+		this.ul = $('<ul>').appendTo(this.div).css({
+			top: divHeight
+		}).width(divWidth - 2).hide();
 		
 		var listMaxHeight = this.options.listMaxHeight;
 		if(listMaxHeight){
@@ -78,7 +83,7 @@ $.widget('ui.autoCompleteCombox', {
 			var _value = $(this).attr('value');
 			var _text = $(this).text();
 			var _selected = $(this).prop('selected');
-			var _li = $('<li>').appendTo(_ul).attr('value', _value).text(_text)
+			var _li = $('<li>').appendTo(_ul).data('value', _value).text(_text)
 				.css({
 						paddingLeft: optionPaddingLeft, 
 						fontSize: fontSize,
@@ -153,76 +158,82 @@ $.widget('ui.autoCompleteCombox', {
     	var _self = this;
     	
     	//下三角点击事件
-    	this.span.on('click', function(){
+        this.span.on('click', function(){
     		_self._showList();
     	});
     	
     	//输入焦点捕获事件
-    	this.input.on('click', function(){
+        this.input.on('focusin', function(){
     		_self._showList();
     	});
+
+		//输入事件
+        this.input.keyup(function(event){
+            //Enter上下方向键、TAB键
+			if(event.which == 13 || event.which == 38 || event.which == 40 || event.which == 9){
+				return;
+			}
+
+			_self.ul.children().removeClass('selected');
+			_self._showList();
+
+			var _text = $(this).val();
+
+			if($.trim(_text) == ''){
+				return;
+			}
+
+			var _regx = new RegExp(".*"+_text+".*","ig");
+
+			_self.ul.children().each(function(){
+				var _litext = $(this).text();
+				if( ! _regx.test(_litext)){
+					$(this).hide().removeClass('show');
+				}
+			});
+
+			if(_self.ul.children('.show').size() == 0){
+				_self.ul.hide();
+			}else{
+				_self.ul.show();
+			}
+		});
     	
     	//lose focus 事件
-    	$(document).on('click', function(event){
-    		var _target = event.target;
-    		if(_target == _self.div.get()[0] || _target == _self.input.get()[0] || _target == _self.span.get()[0] || _target == _self.ul.get()[0]){
-    			return;
+        this.input.on('focusout', function(event){
+            var _textInput = _self.input.val();
+    		var _textSelected = _self.element.find("option:selected").text();
+    		
+    		if(_textInput != _textSelected){
+    			alert('请选择一个列表中存在的值');
+                this.focus();
+                return;
     		}
-    		_self._hideList();
+            setTimeout(function(){
+                _self._hideList();
+            }, 100);
     	});
-    	
-    	$(document).on('keydown', function(event){
-    		if( ! _self.ul.is(':hidden')){
+
+        //点击方向键
+        this.div.on('keydown', 'ul, li, input', function(event){
+    		if( ! _self.ul.is(':hidden') && (event.which == 38 || event.which == 40)){
     			_self._onArrowPress(event);
     		}
     	});
     	
     	//选中事件
-    	this.ul.on('click', 'li', function(){
-    		if($(this).hasClass('selected')){
-    			return false;
-    		}
-    		var _value = $(this).attr('value');
+        this.ul.on('click, mouseenter', 'li', function(event){
+    		var _value = $(this).data('value');
     		var _text = $(this).text();
-
+    		
     		_self._onChange(_value, _text);
     		
     		$(this).siblings('.selected').removeClass('selected');
     		$(this).addClass('selected');
-    		
-    		_self._hideList();
+    		if(event.type == 'click'){
+                _self._hideList();
+            }
     		return false;
     	});
-    	
-    	//输入事件
-    	this.input.keyup(function(event){
-    		
-    		if(event.which == 13){
-    			_self._hideList();
-    			return;
-    		}
-    		
-    		if(event.which == 38 || event.which == 40){
-    			return;
-    		}
-
-    		_self._showList();
-    		
-    		var _text = $(this).val();
-    		
-    		if($.trim(_text) == ''){
-    			return;
-    		}
-    		
-    		var _regx = new RegExp(".*"+_text+".*","ig");
-
-    		_self.ul.children().each(function(){
-    			var _litext = $(this).text();
-    			if( ! _regx.test(_litext)){
-    				$(this).hide().removeClass('show');
-    			}
-    		});
-    	});
     }
-	
 });
