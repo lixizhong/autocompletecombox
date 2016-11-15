@@ -2,7 +2,8 @@
  * 将html的select控件转换为具有自动补全功能的下拉列表插件
  * 用法：
  * $('#id').autoCompleteCombox({
- * 		inputClass: 'input', 			
+ * 		inputClass: 'input', 
+ *		listMaxHeight: 100, 
  * 		onchange: function(event, data){
  *			var value = data.value;
  *			var text = data.text;
@@ -112,7 +113,7 @@ $.widget('ui.autoCompleteCombox', {
     _onChange: function(_value, _text){
     	this.element.val(_value);
     	this.input.val(_text);
-    	this._trigger("onchange", null, { value: _value, text:_text } )
+    	this._trigger("onchange", null, { value: _value, text:_text });
     },
     
     _onArrowPress: function(event){
